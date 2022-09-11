@@ -6,7 +6,7 @@ import random
 
 
 class DepthSepConv2D(Module):  # Depthwise Separable Convolutions 分离表现在哪？？
-    def __init__(self, in_channels, out_channels, kernel_size, activation=None, padding=True, stride=(1,1), dialation=(1,1)):  # 步长保持为1 膨胀值为1
+    def __init__(self, in_channels, out_channels, kernel_size, activation=None, padding=True, stride=(1,1), dilation=(1,1)):  # 步长保持为1 膨胀值为1
         super(DepthSepConv2D, self).__init__()
         self.padding = None
         if padding:
@@ -21,8 +21,8 @@ class DepthSepConv2D(Module):  # Depthwise Separable Convolutions 分离表现�
 
         else:
             padding = (0, 0)
-        self.depth_conv = Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=kernel_size, dialation=dialation, stride=stride, padding=padding, groups=in_channels)
-        self.point_conv = Conv2d(in_channels=in_channels, out_channels=out_channels, dilation=dialation, kernel_size=(1, 1))
+        self.depth_conv = Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=kernel_size, dilation=dilation, stride=stride, padding=padding, groups=in_channels)
+        self.point_conv = Conv2d(in_channels=in_channels, out_channels=out_channels, dilation=dilation, kernel_size=(1, 1))
         self.activation = activation
 
 
@@ -77,7 +77,7 @@ class ConvBlock(Module):
         track_running_stats: 布尔值，当设为True，记录训练过程中的均值和方差
 
         """
-        self.dropout = Mixdropout(dropout_proba=dropout, dropout2d_proba=dropout / 2)
+        self.dropout = MixDropout(dropout_proba=dropout, dropout2d_proba=dropout / 2)
 
     def forward(self, x):
         pos = random.randint(1, 3)

@@ -1,7 +1,7 @@
 import sys
 sys.path.insert(0, '../../..')
 from trainer import TrainerLineCTC
-from models import Decoder
+from model import Decoder
 from basic.models import FCN_Encoder
 from torch.optim import Adam
 from basic.dataset_manager import OCRDataset
@@ -11,8 +11,8 @@ import torch
 
 def train_and_test(rank, params):
     params["training_params"]["ddp_rank"] = rank
-    model = TrainerLineCTC(params)
-    model.train()
+    model = TrainerLineCTC(params)  # 传参到LineCTC
+    model.train()  #
 
     model.params["training_params"]["load_epoch"] = "best"  # load weights giving best CER on valid set
     model.load_model()
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     params = {
         "dataset_params": {
             "datasets": {
-                dataset_name: "../../../Datasets/formatted/{}_lines".format(dataset_name),
+                dataset_name: "./Datasets/format/{}_lines".format(dataset_name),
             },
             "train": {
                 "name": "{}-train".format(dataset_name),
@@ -123,7 +123,7 @@ if __name__ == '__main__':
             "use_ddp": False,  # Use DistributedDataParallel
             "use_apex": True,  # Enable mix-precision with apex package
             "nb_gpu": torch.cuda.device_count(),
-            "batch_size": 16,  # mini-batch size per GPU
+            "batch_size": 8,  # mini-batch size per GPU
             "optimizer": {
                 "class": Adam,
                 "args": {
@@ -144,5 +144,11 @@ if __name__ == '__main__':
 
     if params["training_params"]["use_ddp"] and not params["training_params"]["force_cpu"]:
         mp.spawn(train_and_test, args=(params,), nprocs=params["training_params"]["nb_gpu"])
+        """
+        mp.spawn 分布式支持  fn：派生程序入口；
+        nprocs: 派生进程个数；
+        join: 是否加入同一进程池；
+        daemon：是否创建守护进程；
+        """
     else:
         train_and_test(0, params)

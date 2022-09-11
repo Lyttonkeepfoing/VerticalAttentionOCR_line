@@ -75,7 +75,7 @@ def format_IAM():
 
     shutil.rmtree(line_folder_path)   # 递归删除一个目录以及目录内的所有内容
     # print(gt)  # {'train': {'train_0.png': {'text': 'A MOVE to stop Mr. Gaitskell from'}, 'train_1.png': {'text': 'nominating any more Labour life Peers'}, 'train_2.png': {'text': 'is to be made at a meeting of Labour'}, 'train_3.png': {'text': 'M Ps tomorrow. Mr. Michael Foot has'},
-    print(list(charset)) # TODO:这里的charset有什么用？
+    print(list(charset)) # TODO:这里的charset有什么用？ 已解决
     with open(os.path.join(IAM_target, "labels.pkl"), "wb") as f:
          pickle.dump({
             "ground_truth": gt,
