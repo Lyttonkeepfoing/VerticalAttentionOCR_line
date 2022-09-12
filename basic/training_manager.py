@@ -51,7 +51,7 @@ class GenericTrainingManager:
         self.load_dataset()
         self.load_model()
 
-    def init_paths(self):
+    def init_paths(self):  # 一些路径设置
         ## Create output folders
         output_path = os.path.join("outputs", self.params["training_params"]["output_folder"])
         os.makedirs(output_path, exist_ok=True)
@@ -126,7 +126,7 @@ class GenericTrainingManager:
             print("WORKING ON CPU !\n")
         print("##################")
 
-    def load_model(self, reset_optimizer=False):
+    def load_model(self, reset_optimizer=False):  # load model
         def to_DDP(model, use_apex, rank):
             if use_apex:
                 return aDDP(model)  #  from apex.parallel import DistributedDataParallel as aDDP
@@ -193,6 +193,11 @@ load checkpoints
             for model_name in self.models.keys():
                 self.models[model_name].apply(self.weights_init)
             # Handle transfer learning instructions
+
+            """
+            transfer learning 后面paragraph-level要用的
+            """
+
             if self.params["model_params"]["transfer_learning"]:
                 # Iterates over models
                 for model_name in self.params["model_params"]["transfer_learning"].keys():
@@ -404,9 +409,13 @@ load checkpoints
                 display_values[metric_name] = round(metrics[metric_name] / metrics["nb_samples"], 4)
         return display_values
 
-    def backward_loss(self, loss, retain_graph=False):
+    def backward_loss(self, loss, retain_graph=False):  # 反向传播
         """
         Custom loss backward depending on the use of apex package
+        pytoch构建的计算图是动态图，为了节约内存，所以每次一轮迭代完也即是进行了一次backward函数计算之后计算图就被在内存释放，
+        因此如果你需要多次backward只需要在第一次反向传播时候添加一个retain_graph=True标识，让计算图不被立即释放。
+        实际上文档中retain_graph和create_graph两个参数作用相同，因为前者是保持计算图不释放，而后者是创建计算图，
+        因此如果我们不想要计算图释放掉，将任意一个参数设置为True都行。
         """
         if self.params["training_params"]["use_apex"]:
             with apex.amp.scale_loss(loss, self.optimizer) as scaled_loss:
@@ -416,7 +425,7 @@ load checkpoints
 
     def train(self):
         # init tensorboard file and output param summary file
-        if self.is_master:
+        if self.is_master:    # 不知道is_master代表什么意思 但是不影响 就是写log
             self.writer = SummaryWriter(self.paths["results"])  # 写log
             self.save_params()
         # init variables  # 初始一些参数设置
@@ -427,7 +436,7 @@ load checkpoints
         metrics_name = self.params["training_params"]["train_metrics"]
         display_values = None
         # init curriculum learning
-        # 是否课程学习
+        # 是否课程学习         TODO:不知道这个课程学习用在哪里 和earlystopping有关吗
         if "curriculum_learning" in self.params["training_params"].keys() and self.params["training_params"]["curriculum_learning"]:
             self.init_curriculum()
         # perform epochs
@@ -442,9 +451,9 @@ load checkpoints
             # init epoch metrics values
             metrics = self.init_metrics(metrics_name)
             t = tqdm(self.dataset.train_loader)
-            t.set_description("EPOCH {}/{}".format(num_epoch, nb_epochs))
+            t.set_description("EPOCH {}/{}".format(num_epoch, nb_epochs))  # 训练到多少个epoch 一共多少个epoch
             # iterates over mini-batch data
-            for ind_batch, batch_data in enumerate(t):
+            for ind_batch, batch_data in enumerate(t):  # 开始迭代
                 self.latest_batch = ind_batch + 1
                 self.total_batch += 1
                 # train on batch data and compute metrics
@@ -460,10 +469,10 @@ load checkpoints
                 # Add batch metrics values to epoch metrics values
                 metrics = self.update_metrics(metrics, batch_metrics)
                 display_values = self.get_display_values(metrics, metrics_name, ind_batch)
-                t.set_postfix(values=str(display_values))
+                t.set_postfix(values=str(display_values))  # 显示进度 没什么用 tqdm里的
             # log metrics in tensorboard file
             if self.is_master:
-                for key in display_values.keys():
+                for key in display_values.keys():  # add scalar
                     self.writer.add_scalar('{}_{}'.format(self.params["dataset_params"]["train"]["name"], key), display_values[key], num_epoch)
             self.latest_train_metrics = display_values
 
@@ -506,7 +515,7 @@ load checkpoints
         t = tqdm(loader)
         t.set_description("Evaluation E{}".format(self.latest_epoch))
         with torch.no_grad():
-            # iterate over batch data
+            # iterate over batch data   # 开始算损失
             for ind_batch, batch_data in enumerate(t):
                 self.latest_batch = ind_batch + 1
                 # eval batch data and compute metrics
@@ -522,10 +531,10 @@ load checkpoints
                 t.set_postfix(values=str(display_values))
         return display_values
 
-    def predict(self, custom_name, sets_list, metrics_name, output=False):
+    def predict(self, custom_name, sets_list, metrics_name, output=False):  # 预测
         metrics_name = metrics_name.copy()
         self.dataset.generate_test_loader(custom_name, sets_list)
-        loader = self.dataset.test_loaders[custom_name]
+        loader = self.dataset.test_loaders[custom_name]  # test loader
         # Set models in eval mode
         for model_name in self.models.keys():
             self.models[model_name].eval()
@@ -561,7 +570,7 @@ load checkpoints
         # output metrics values if requested
         if output:
             for name in ["probas", ]:
-                if name in metrics.keys():
+                if name in metrics.keys():   # 把结果写到txt里
                     path = os.path.join(self.paths["results"], "{}_{}_{}.txt".format(name, custom_name, self.latest_epoch))
                     info = "\n".join(metrics[name])
                     with open(path, "w") as f:
@@ -646,7 +655,7 @@ load checkpoints
             return
         self.save_model(self.latest_epoch, "last")
 
-    def output(self, metrics, set_name):
+    def output(self, metrics, set_name):  # 就是一些写权重的设置
         """
         Output metrics in text file
         """
@@ -705,7 +714,7 @@ load checkpoints
         info_dict["curriculum_config"] = self.dataset.train_dataset.curriculum_config
         return info_dict
 
-    def check_and_update_curriculum(self):
+    def check_and_update_curriculum(self):  # 检查课程更新情况，如符合则更新
         """
         Check curriculum update conditions and update if they are satisfied
         """
@@ -713,7 +722,7 @@ load checkpoints
         if not self.dataset.train_dataset.curriculum_config:
             return
         curr_metrics = self.dataset.train_dataset.curriculum_config["log_metrics"]
-        # Log curriculum metrics in tensorboard file
+        # Log curriculum metrics in tensorboard file  # 找不到 没加进去
         if self.is_master:
             for curr_metric in curr_metrics:
                 if curr_metric in self.dataset.train_dataset.curriculum_config:

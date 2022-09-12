@@ -13,7 +13,7 @@ class Decoder(Module):
         self.end_conv = Conv2d(in_channels=256, out_channels=self.vocab_size+1, kernel_size=(1, 1))
 
     def forward(self, x):
-        x = self.ada_pool(x)
+        x = self.ada_pool(x)  # 结构很简单
         x = self.end_conv(x)
         x = torch.squeeze(x, dim=2)
         return log_softmax(x, dim=1)

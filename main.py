@@ -12,7 +12,7 @@ import torch
 def train_and_test(rank, params):
     params["training_params"]["ddp_rank"] = rank
     model = TrainerLineCTC(params)  # 传参到LineCTC
-    model.train()  #
+    model.train()  # 开始训练
 
     model.params["training_params"]["load_epoch"] = "best"  # load weights giving best CER on valid set
     model.load_model()
@@ -123,7 +123,7 @@ if __name__ == '__main__':
             "use_ddp": False,  # Use DistributedDataParallel
             "use_apex": False,  # Enable mix-precision with apex package  # apex下不好就不要用了
             "nb_gpu": torch.cuda.device_count(),
-            "batch_size": 8,  # mini-batch size per GPU
+            "batch_size": 1,  # mini-batch size per GPU
             "optimizer": {
                 "class": Adam,
                 "args": {

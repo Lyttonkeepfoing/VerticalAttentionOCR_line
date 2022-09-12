@@ -25,7 +25,7 @@ def pad_sequences_1D(data, padding_value):  # padding
     return padded_data
 
 
-def pad_images(data, padding_value):
+def pad_images(data, padding_value):  # img pad
     """
     data: list of numpy array
     """
@@ -201,7 +201,7 @@ class GenericDataset(Dataset):
                         samples[-1]["raw_line_seg_label"] = gt[filename]["lines"]
         return samples
 
-    def apply_preprocessing(self, preprocessings):
+    def apply_preprocessing(self, preprocessings):  # 各种preprocess
         for i in range(len(self.samples)):
             self.samples[i]["resize_ratio"] = [1, 1]
             for preprocessing in preprocessings:
@@ -268,7 +268,7 @@ class GenericDataset(Dataset):
         self.std = std
         return mean, std
 
-    def apply_data_augmentation(self, img):
+    def apply_data_augmentation(self, img):   # 各种数据增强 前面的类都有写介绍
         aug = self.params["config"]["augmentation"]
         if aug and self.set_name == "train":
             # Convert to PIL Image
@@ -366,13 +366,13 @@ class OCRDataset(GenericDataset):
 
         return sample
 
-    def get_charset(self):
+    def get_charset(self):  # 拿一些特殊符号
         charset = set()
         for i in range(len(self.samples)):
             charset = charset.union(set(self.samples[i]["label"]))
         return charset
 
-    def convert_labels(self):
+    def convert_labels(self):  # 取一些label
         """
         Label str to token at character level
         """
@@ -417,12 +417,12 @@ class DatasetManager:
         self.charset = self.get_merged_charsets()
         self.load_datasets()
 
-        if params["config"]["charset_mode"].lower() == "ctc":
+        if params["config"]["charset_mode"].lower() == "ctc":   # 如果用ctc blank的数量就是charset的数量
             self.tokens["blank"] = len(self.charset)
             self.tokens["pad"] = self.tokens["pad"] if self.tokens["pad"] else len(self.charset) + 1
             params["config"]["padding_token"] = self.tokens["pad"]
 
-        elif params["config"]["charset_mode"] == "attention":
+        elif params["config"]["charset_mode"] == "attention":  # 同样charset切开 加end start
             self.tokens["end"] = len(self.charset)
             self.tokens["start"] = len(self.charset) + 1
             self.tokens["pad"] = self.tokens["pad"] if self.tokens["pad"] else len(self.charset) + 2
@@ -443,7 +443,7 @@ class DatasetManager:
             print(datasets[key])
             with open(os.path.join( ("/home/lyt/demospace/Vertical_att_line_OCR/Datasets/format/IAM_lines"), "labels.pkl"), "rb") as f:
                 info = pickle.load(f)
-                charset = charset.union(set(info["charset"]))
+                charset = charset.union(set(info["charset"]))  # 取并集
         if "\n" in charset:
             charset.remove("\n")
         if "¬" in charset:
@@ -497,7 +497,7 @@ class DatasetManager:
                                                  shuffle=False, num_workers=self.params["num_gpu"], pin_memory=True,
                                                  drop_last=False, collate_fn=self.my_collate_function)
 
-    def generate_test_loader(self, custom_name, sets_list):
+    def generate_test_loader(self, custom_name, sets_list):  # test loader
         if custom_name in self.test_loaders.keys():
             return
         paths_and_sets = list()
@@ -519,7 +519,7 @@ class DatasetManager:
                                                     shuffle=False, num_workers=self.params["num_gpu"], pin_memory=True,
                                                     drop_last=False, collate_fn=self.my_collate_function)
 
-    def get_paths_and_sets(self, set_name, dataset_names):
+    def get_paths_and_sets(self, set_name, dataset_names):  # 写一下path
         paths_and_sets = list()
         for dataset_name in dataset_names:
             path = self.params["datasets"][dataset_name]
