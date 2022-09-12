@@ -417,16 +417,17 @@ load checkpoints
     def train(self):
         # init tensorboard file and output param summary file
         if self.is_master:
-            self.writer = SummaryWriter(self.paths["results"])
+            self.writer = SummaryWriter(self.paths["results"])  # 写log
             self.save_params()
-        # init variables
+        # init variables  # 初始一些参数设置
         self.begin_time = time()
-        focus_metric_name = self.params["training_params"]["focus_metric"]
+        focus_metric_name = self.params["training_params"]["focus_metric"]  # 用什么metric
         nb_epochs = self.params["training_params"]["max_nb_epochs"]
         interval_save_weights = self.params["training_params"]["interval_save_weights"]
         metrics_name = self.params["training_params"]["train_metrics"]
         display_values = None
         # init curriculum learning
+        # 是否课程学习
         if "curriculum_learning" in self.params["training_params"].keys() and self.params["training_params"]["curriculum_learning"]:
             self.init_curriculum()
         # perform epochs

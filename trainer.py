@@ -46,10 +46,13 @@ class TrainerLineCTC(GenericTrainingManager):
 
         loss_ctc = CTCLoss(blank=self.dataset.tokens["blank"], reduction="sum")
 
+        """
+        
+        """
         x = self.models["encoder"](x)
         global_pred = self.models["decoder"](x)
 
-        loss = loss_ctc(global_pred.permute(2, 0, 1), y, x_reduced_len, y_len)
+        loss = loss_ctc(global_pred.permute(2, 0, 1), y, x_reduced_len, y_len)   # 为什么做一个permute
         pred = torch.argmax(global_pred, dim=1).cpu().numpy()
         metrics = self.compute_metrics(pred, y.cpu().numpy(), x_reduced_len, y_len, loss=loss.item(), metric_names=metric_names)
         if "pred" in metric_names:
@@ -61,7 +64,7 @@ class TrainerLineCTC(GenericTrainingManager):
         ind_x = [x[i][:x_len[i]] for i in range(batch_size)]
         ind_y = [y[i][:y_len[i]] for i in range(batch_size)]
         ind_x = [self.ctc_remove_successives_identical_ind(t) for t in ind_x]
-        str_x = [LM_ind_to_str(self.dataset.charset, t, oov_symbol="") for t in ind_x]
+        str_x = [LM_ind_to_str(self.dataset.charset, t, oov_symbol="") for t in ind_x]  #
         str_y = [LM_ind_to_str(self.dataset.charset, t) for t in ind_y]
         str_x = [re.sub("( )+", ' ', t).strip(" ") for t in str_x]
         metrics = dict()
