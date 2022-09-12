@@ -121,7 +121,7 @@ if __name__ == '__main__':
             "load_epoch": "best",  # ["best", "last"], to load weights from best epoch or last trained epoch
             "interval_save_weights": None,  # None: keep best and last only
             "use_ddp": False,  # Use DistributedDataParallel
-            "use_apex": True,  # Enable mix-precision with apex package
+            "use_apex": False,  # Enable mix-precision with apex package  # apex下不好就不要用了
             "nb_gpu": torch.cuda.device_count(),
             "batch_size": 8,  # mini-batch size per GPU
             "optimizer": {

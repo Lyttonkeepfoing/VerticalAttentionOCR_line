@@ -67,14 +67,14 @@ class GenericTrainingManager:
         }
 
     def load_dataset(self):
-        self.params["dataset_params"]["use_ddp"] = self.params["training_params"]["use_ddp"]
+        self.params["dataset_params"]["use_ddp"] = self.params["training_params"]["use_ddp"]  # 是否并行训练
         self.params["dataset_params"]["batch_size"] = self.params["training_params"]["batch_size"]
         self.params["dataset_params"]["num_gpu"] = self.params["training_params"]["nb_gpu"]
         self.dataset = DatasetManager(self.params["dataset_params"])
         if self.dataset.charset:
             self.params["model_params"]["vocab_size"] = len(self.dataset.charset)
 
-    def init_apex_config(self):
+    def init_apex_config(self):         # apex 用于混合精度训练加速
         if not is_installed_apex:
             if self.params["training_params"]["use_apex"]:
                 print("Warning: Apex not used ! (not installed)")
@@ -84,7 +84,7 @@ class GenericTrainingManager:
         }
         self.params["dataset_params"]["use_apex"] = self.params["training_params"]["use_apex"]
 
-    def init_hardware_config(self):
+    def init_hardware_config(self):  # 一些硬件设置
         # Debug mode
         if self.params["training_params"]["force_cpu"]:
             self.params["training_params"]["use_ddp"] = False
@@ -129,9 +129,9 @@ class GenericTrainingManager:
     def load_model(self, reset_optimizer=False):
         def to_DDP(model, use_apex, rank):
             if use_apex:
-                return aDDP(model)
+                return aDDP(model)  #  from apex.parallel import DistributedDataParallel as aDDP
             else:
-                return tDDP(model, device_ids=[rank])
+                return tDDP(model, device_ids=[rank]) # from torch.nn.parallel import DistributedDataParallel as tDDP
 
         # Instanciate Model
         for model_name in self.params["model_params"]["models"].keys():
@@ -142,6 +142,11 @@ class GenericTrainingManager:
         self.reset_optimizer()
         if "lr_scheduler" in self.params["training_params"] and self.params["training_params"]["lr_scheduler"]:
             self.lr_scheduler = self.params["training_params"]["lr_scheduler"]["type"](self.optimizer, gamma=self.params["training_params"]["lr_scheduler"]["gamma"])
+
+        """
+load checkpoints
+        """
+
 
         # Load previous weights
         checkpoint = None

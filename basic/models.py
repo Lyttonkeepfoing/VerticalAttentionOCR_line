@@ -66,7 +66,7 @@ class ConvBlock(Module):
 
         self.activation = activation()
         self.conv1 = Conv2d(in_channels=in_, out_channels=out_, kernel_size=k, padding=k // 2)
-        self.conv2 = Conv2d(in_channels=in_, out_channels=out_, kernel_size=k, padding=k // 2)
+        self.conv2 = Conv2d(in_channels=out_, out_channels=out_, kernel_size=k, padding=k // 2)
         self.conv3 = Conv2d(out_, out_, kernel_size=(3, 3), padding=(1, 1), stride=stride)
         self.norm_layer = InstanceNorm2d(out_, eps=0.001, momentum=0.99, track_running_stats=False)  # TODO:这里的参数或许可以改改
         """
